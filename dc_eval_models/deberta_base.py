@@ -31,8 +31,8 @@ class CFG:
     num_warmup_steps = 0
     trn_fold = [0, 1, 2, 3, 4]
     gradient_checkpointing = True
-    model = 'deberta-v3-base'
-    tokenizer = AutoTokenizer.from_pretrained(model, use_fast=fast)
+    model = 'microsoft/deberta-v3-base'
+    tokenizer = AutoTokenizer.from_pretrained('./dc_eval_models/pretrained/deberta/tokenizer', use_fast=fast)
 
 def softmax(z):
     assert len(z.shape) == 2
@@ -101,15 +101,13 @@ class DebertaBaseModel:
         text = dc_type + ' ' + dc_text + '[SEP]' + essay
 
         inputs = CFG.tokenizer.encode_plus(text, truncation=True, add_special_tokens=True, max_length=CFG.max_len)
-        samples = {'input_ids': inputs['input_ids'], 'attention_mask': inputs['attention_mask'], }
-        if 'token_type_ids' in inputs: samples['token_type_ids'] = inputs['token_type_ids']
-        return samples
+        return inputs
 
     def predict(self, dc_text: str, dc_type: str, essay: str) -> dict:
         data = self.__prepare_input__(dc_text, dc_type, essay)
 
-        ids = data['input_ids'].to(self.device, dtype = torch.long)
-        mask = data['attention_mask'].to(self.device, dtype = torch.long)
+        ids = torch.tensor([data['input_ids']]).to(self.device, dtype = torch.long)
+        mask = torch.tensor([data['attention_mask']]).to(self.device, dtype = torch.long)
 
         predictions = []
         for i in CFG.trn_fold:
@@ -118,11 +116,15 @@ class DebertaBaseModel:
             model.eval()
             model.to(self.device)
 
-            pred = model.forward(ids, mask)
+            with torch.no_grad():
+                pred = model(ids, mask)
+
             pred = pred.detach().numpy()
+            pred = np.array([pred])
+            pred = softmax(pred)
             predictions.append(pred)
 
-        output = np.mean(predictions, axis=1)
+        output = np.mean(predictions, axis=0).flatten()
         id = np.argmax(output)
 
         return {'effectiveness': self.target_list[id], 'score': output[id]}
