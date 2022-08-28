@@ -44,9 +44,11 @@ class EssayEvaluator:
         for i in range(len(discourses)):
             st = discourses[i]["start"]
             ed = discourses[i]["end"]
-            dc_txt = essay[st:ed + 1]
 
-            eval = self.evaluator.process(dc_txt, args, kwargs)
+            dc_txt = essay[st:ed + 1]
+            dc_type = discourses[i]["type"]
+
+            eval = self.evaluator.process(dc_txt, dc_type, essay, args, kwargs)
             discourses[i] = discourses[i] | eval
 
         return discourses

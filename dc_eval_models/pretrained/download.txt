@@ -1,0 +1,2 @@
+bert-base.pth: https://www.kaggle.com/code/goldenskygiang/feedback-prize-eda-bert-baseline/data
+deberta-base: fold_x.pth: https://www.kaggle.com/datasets/rolianklay/dbv3basemodels202279 (Please rename model files to fold_x.pth)
