@@ -114,7 +114,7 @@ class DebertaBaseModel:
         predictions = []
         for i in CFG.trn_fold:
             model = FeedBackModel(CFG.model)
-            model.load_state_dict(torch.load(f'./dc_eval_models/pretrained/deberta/fold{i}.pth', map_location=self.device))
+            model.load_state_dict(torch.load(f'./dc_eval_models/pretrained/deberta/fold_{i}.pth', map_location=self.device))
             model.eval()
             model.to(self.device)
 
