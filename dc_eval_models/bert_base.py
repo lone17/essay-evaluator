@@ -22,6 +22,7 @@ class BertBaseModel(DiscourseEvalBaseModel):
 
         self.model = FeedbackPrizeModel(len(self.target_list))
         self.model.load_state_dict(torch.load(weight, map_location=self.device))
+        self.model.eval()
         self.model.to(self.device)
 
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
