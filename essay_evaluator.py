@@ -1,4 +1,3 @@
-from dis import dis
 from typing import List
 from discourse_evaluator import DiscourseEvaluator
 

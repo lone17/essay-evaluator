@@ -4,7 +4,7 @@ from text_unidecode import unidecode
 from transformers import AutoModel, AutoConfig, AutoTokenizer
 from typing import Dict, List, Tuple
 
-from dc_eval_base import DiscourseEvalBaseModel
+from .dc_eval_base import DiscourseEvalBaseModel
 
 class CFG:
     n_fold = 5

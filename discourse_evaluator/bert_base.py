@@ -1,7 +1,7 @@
 import torch, numpy as np
 from transformers import BertModel, BertConfig, BertTokenizer
 
-from dc_eval_base import DiscourseEvalBaseModel
+from .dc_eval_base import DiscourseEvalBaseModel
 
 class FeedbackPrizeModel(torch.nn.Module):
     def __init__(self, target_size):
@@ -58,6 +58,7 @@ class BertBaseModel(DiscourseEvalBaseModel):
         output = output.detach().cpu().numpy()
 
         output = self.softmax(output)
+        print(output)
 
         id = np.argmax(output)
 
