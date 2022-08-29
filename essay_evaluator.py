@@ -3,19 +3,15 @@ from typing import List
 from discourse_evaluator import DiscourseEvaluator
 
 from discourse_recognizer import DiscourseRecognizer
-from discourse_classifier import DiscourseClassifier
-
 
 class EssayEvaluator:
     def __init__(
         self, 
         discourse_recognizer: DiscourseRecognizer,
-        discourse_classifer: DiscourseClassifier, 
         discourse_evaluator: DiscourseEvaluator, 
         *args, **kwargs) -> None:
 
         self.recognizer = discourse_recognizer
-        self.classifier = discourse_classifer
         self.evaluator = discourse_evaluator
     
     def process(self, essay: str, *args, **kwargs) -> List[dict]:
@@ -49,6 +45,6 @@ class EssayEvaluator:
             dc_type = discourses[i]["type"]
 
             eval = self.evaluator.process(dc_txt, dc_type, essay, args, kwargs)
-            discourses[i] = discourses[i] | eval
+            discourses[i].update(eval)
 
         return discourses

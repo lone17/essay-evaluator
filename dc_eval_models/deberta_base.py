@@ -4,44 +4,18 @@ from text_unidecode import unidecode
 from transformers import AutoModel, AutoConfig, AutoTokenizer
 from typing import Dict, List, Tuple
 
+from dc_eval_base import DiscourseEvalBaseModel
+
 class CFG:
-    CVs = []
-    seed = 42
-    lr = 3e-5
-    epochs = 3
     n_fold = 5
-    apex = True
     fast = True
-    AMP = False
-    n_splits = 5
-    train = True
-    wandb = False
     max_len = 512
     dropout = 0.1
-    min_lr = 1e-6
     batch_size = 8
     freezing = True
-    print_freq = 50
     target_size = 3
-    num_workers = 0
-    num_cycles = 0.5
-    n_accumulate = 1
-    scheduler = 'cosine'
-    weigth_decay = 0.01
-    num_warmup_steps = 0
-    trn_fold = [0, 1, 2, 3, 4]
     gradient_checkpointing = True
     model = 'microsoft/deberta-v3-base'
-    tokenizer = AutoTokenizer.from_pretrained('./dc_eval_models/pretrained/deberta/tokenizer', use_fast=fast)
-
-def softmax(z):
-    assert len(z.shape) == 2
-    s = np.max(z, axis=1)
-    s = s[:, np.newaxis]
-    e_x = np.exp(z - s)
-    div = np.sum(e_x, axis=1)
-    div = div[:, np.newaxis]
-    return e_x / div
 
 def freeze(module):
     for parameter in module.parameters():
@@ -60,7 +34,7 @@ class MeanPooling(nn.Module):
         return mean_embeddings
 
 class FeedBackModel(nn.Module):
-    def __init__(self, model_name):
+    def __init__(self, model_name, target_size):
         super(FeedBackModel, self).__init__()
         self.model = AutoModel.from_pretrained(model_name)
         if CFG.gradient_checkpointing: (self.model).gradient_checkpointing_enable()
@@ -71,7 +45,7 @@ class FeedBackModel(nn.Module):
         self.config = AutoConfig.from_pretrained(model_name)
         self.drop = nn.Dropout(p=CFG.dropout)
         self.pooler = MeanPooling()
-        self.fc = nn.Linear(self.config.hidden_size, CFG.target_size)
+        self.fc = nn.Linear(self.config.hidden_size, target_size)
         
     def forward(self, ids, mask):
         out = self.model(input_ids = ids, attention_mask = mask, output_hidden_states = False)
@@ -90,17 +64,26 @@ def resolve_encodings_and_normalize(text: str) -> str:
     text = unidecode(text)
     return text
 
-class DebertaBaseModel:
-    def __init__(self):
-        self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-        self.target_list = ['Ineffective', 'Adequate', 'Effective']
+class DebertaBaseModel(DiscourseEvalBaseModel):
+    def __init__(self, weights: list, tokenizer_path: str):
+        super(DebertaBaseModel, self).__init__()
+
+        self.trn_folds = len(weights)
+        self.models = [None for i in range(self.trn_folds)]
+        for i in range(self.trn_folds):
+            self.models[i] = FeedBackModel(CFG.model, len(self.target_list))
+            self.models[i].load_state_dict(torch.load(weights[i], map_location=self.device))
+            self.models[i].eval()
+            self.models[i].to(self.device)
+
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, use_fast=True)
 
     def __prepare_input__(self, dc_text: str, dc_type: str, essay: str):
         dc_text = resolve_encodings_and_normalize(dc_text)
         essay = resolve_encodings_and_normalize(essay)
         text = dc_type + ' ' + dc_text + '[SEP]' + essay
 
-        inputs = CFG.tokenizer.encode_plus(text, truncation=True, add_special_tokens=True, max_length=CFG.max_len)
+        inputs = self.tokenizer.encode_plus(text, truncation=True, add_special_tokens=True, max_length=CFG.max_len)
         return inputs
 
     def predict(self, dc_text: str, dc_type: str, essay: str) -> dict:
@@ -110,18 +93,12 @@ class DebertaBaseModel:
         mask = torch.tensor([data['attention_mask']]).to(self.device, dtype = torch.long)
 
         predictions = []
-        for i in CFG.trn_fold:
-            model = FeedBackModel(CFG.model)
-            model.load_state_dict(torch.load(f'./dc_eval_models/pretrained/deberta/fold_{i}.pth', map_location=self.device))
-            model.eval()
-            model.to(self.device)
-
+        for i in range(self.trn_folds):
             with torch.no_grad():
-                pred = model(ids, mask)
+                pred = self.models[i](ids, mask)
 
-            pred = pred.detach().numpy()
-            pred = np.array([pred])
-            pred = softmax(pred)
+            pred = pred.detach().cpu().numpy()
+            pred = self.softmax(pred)
             predictions.append(pred)
 
         output = np.mean(predictions, axis=0).flatten()

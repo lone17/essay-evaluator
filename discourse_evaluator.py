@@ -1,9 +1,9 @@
 from dc_eval_models.bert_base import BertBaseModel
-
+from dc_eval_models.dc_eval_base import DiscourseEvalBaseModel
 
 class DiscourseEvaluator:
-    def __init__(self, weights) -> None:
-        self.model = BertBaseModel() # can replace with DeBERTa
+    def __init__(self, model: DiscourseEvalBaseModel) -> None:
+        self.model = model # can replace with DeBERTa
     
     def process(self, discourse: str, discourse_type: str, essay: str, *args, **kwargs) -> dict:
         """_summary_
