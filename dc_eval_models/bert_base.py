@@ -1,12 +1,14 @@
 import torch, numpy as np
-from transformers import BertModel, BertTokenizer
+from transformers import BertModel, BertConfig, BertTokenizer
+
+from dc_eval_base import DiscourseEvalBaseModel
 
 class FeedbackPrizeModel(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, target_size):
         super(FeedbackPrizeModel, self).__init__()
-        self.bert_model = BertModel.from_pretrained('bert-base-uncased', return_dict=True)
+        self.bert_model = BertModel(BertConfig())
         self.dropout = torch.nn.Dropout(0.3)
-        self.linear = torch.nn.Linear(768, 3)
+        self.linear = torch.nn.Linear(768, target_size)
     
     def forward(self, input_ids, attention_mask, token_type_ids):
         output = self.bert_model(input_ids, attention_mask = attention_mask, token_type_ids = token_type_ids)
@@ -14,17 +16,15 @@ class FeedbackPrizeModel(torch.nn.Module):
         output = self.linear(output)
         return output
 
-class BertBaseModel:
-    def __init__(self):
-        self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+class BertBaseModel(DiscourseEvalBaseModel):
+    def __init__(self, weight: str):
+        super(BertBaseModel, self).__init__()
 
-        self.model = FeedbackPrizeModel()
-        self.model.load_state_dict(torch.load('./dc_eval_models/pretrained/bert-base.pth', map_location=self.device))
+        self.model = FeedbackPrizeModel(len(self.target_list))
+        self.model.load_state_dict(torch.load(weight, map_location=self.device))
         self.model.to(self.device)
 
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-
-        self.target_list = ['Ineffective', 'Adequate', 'Effective']
         self.max_len = 128
 
     def __prepare_input__(self, dc_text, dc_type, essay):
@@ -54,7 +54,9 @@ class BertBaseModel:
         token_type_ids = input_data['token_type_ids'].to(self.device, dtype = torch.long)
 
         output = self.model.forward(input_ids, attention_mask, token_type_ids).flatten()
-        output = output.detach().numpy()
+        output = output.detach().cpu().numpy()
+
+        output = self.softmax(output)
 
         id = np.argmax(output)
 
