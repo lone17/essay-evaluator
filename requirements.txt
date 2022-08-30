@@ -1,0 +1,5 @@
+numpy
+scipy
+transformers
+gradio
+cuml
