@@ -1,9 +1,11 @@
+import os
+
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from cuml import ForestInference
-from config import cfg, features_dict, discourses
-from dataload.sequence_dataset import seq_dataset
+from discourse_recognizer.config import cfg, features_dict, discourses
+from discourse_recognizer.dataload.sequence_dataset import seq_dataset
 
 
 def get_tree_models(N_XGB_FOLDS=1):
@@ -12,14 +14,14 @@ def get_tree_models(N_XGB_FOLDS=1):
     for d in discourses:
         model_list = []
         for f in range(N_XGB_FOLDS):
-            xgb_model = ForestInference.load(f"../input/student-writing-7322/xgb_{d}_{f}.json", output_class=True,
+            xgb_model = ForestInference.load(os.path.join(cfg["tree_models_folder"], f"xgb_{d}_{f}.json"), output_class=True,
                                              model_type="xgboost_json")
             model_list.append(xgb_model)
         xgb_models[d] = model_list
 
         model_list = []
         for f in range(N_XGB_FOLDS):
-            lgb_model = ForestInference.load(f"../input/student-writing-7322/lgb_{d}_{f}.txt", output_class=True,
+            lgb_model = ForestInference.load(os.path.join(cfg["tree_models_folder"], f"lgb_{d}_{f}.txt"), output_class=True,
                                              model_type="lightgbm")
             model_list.append(lgb_model)
         lgb_models[d] = model_list
@@ -43,7 +45,7 @@ def get_test_dataframe(texts:list):
     test_id, test_texts = [], []
     for i, essay_text in enumerate(texts):
         test_id.append(i)
-        test_texts.append(test_texts)
+        test_texts.append(essay_text)
     test_df = pd.DataFrame({"id": test_id, "text": test_texts})
     return test_df
 
@@ -81,6 +83,7 @@ def predict_strings(disc_type, probThresh, test_groups, test_texts, word_preds, 
                 string_preds.append((predict_df.id.values[text_idx], disc_type,
                                      ' '.join(map(str, list(range(wordRange[0], wordRange[1]))))))
     return string_preds
+
 
 def sub_df(string_preds):
     return pd.DataFrame(string_preds, columns=['id','class','predictionstring'])

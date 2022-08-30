@@ -60,16 +60,27 @@ MIN_BEGIN_PROB = {
 
 # Use 99.5% of the distribution of lengths for a discourse type as maximum.
 # Increasing this constraint makes this step slower but generally increases performance.
-train_df = pd.read_csv("../input/feedback-prize-2021/train.csv")
-MAX_SEQ_LEN = {}
-train_df['len'] = train_df['predictionstring'].apply(lambda x: len(x.split()))
-max_lens = train_df.groupby('discourse_type')['len'].quantile(.995)
-for disc_type in disc_type_to_ids:
-    MAX_SEQ_LEN[disc_type] = int(max_lens[disc_type])
+# train_df = pd.read_csv("./input/feedback-prize-2021/train.csv")
+# MAX_SEQ_LEN = {}
+# train_df['len'] = train_df['predictionstring'].apply(lambda x: len(x.split()))
+# max_lens = train_df.groupby('discourse_type')['len'].quantile(.995)
+# for disc_type in disc_type_to_ids:
+#     MAX_SEQ_LEN[disc_type] = int(max_lens[disc_type])
+
+MAX_SEQ_LEN = {
+    'Evidence': 299,
+    'Claim': 55,
+    'Lead': 197,
+    'Position': 59,
+    'Counterclaim': 95,
+    'Rebuttal': 116,
+    'Concluding Statement': 191
+}
 
 cfg = {
-    'LOAD_MODEL_FROM': '../input/fp-test78',
-    'DOWNLOADED_MODEL_PATH': '../input/deberta-xlarge',
+    'LOAD_MODEL_FROM': './discourse_recognizer/input/fp-test78',
+    'DOWNLOADED_MODEL_PATH': './discourse_recognizer/input/deberta-xlarge',
+    'tree_models_folder': './discourse_recognizer/input/student-writing-7322/',
 
 
     'N_FEATURES': 34,

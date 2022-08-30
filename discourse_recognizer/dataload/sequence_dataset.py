@@ -1,6 +1,6 @@
 import numpy as np
 from bisect import bisect_left
-from config import disc_type_to_ids, MIN_BEGIN_PROB, MAX_SEQ_LEN, cfg
+from discourse_recognizer.config import disc_type_to_ids, MIN_BEGIN_PROB, MAX_SEQ_LEN, cfg
 
 
 class SeqDataset(object):

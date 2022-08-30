@@ -1,11 +1,11 @@
 import pandas as pd
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer
-from models.transformer_model import TransformerModel, SlidingWindowTransformerModel
-from dataload.infer_dataset import infer_dataset, CustomCollate
-from tools.predict import get_test_dataframe, get_tree_models, predict_strings, sub_df
-from tools.inference import inference
-from config import thresholds, disc_type_to_ids, cfg
+from .models.transformer_model import TransformerModel, SlidingWindowTransformerModel
+from .dataload.infer_dataset import infer_dataset, CustomCollate
+from .tools.predict import get_test_dataframe, get_tree_models, predict_strings, sub_df
+from .tools.inference import inference
+from .config import thresholds, disc_type_to_ids, cfg
 
 
 class DiscourseRecognizer:
@@ -13,7 +13,8 @@ class DiscourseRecognizer:
         self.config = config
         self.xgb_models, self.lgb_models = get_tree_models(self.config["N_XGB_FOLDS"])
         self.tokenizer = AutoTokenizer.from_pretrained(self.config["DOWNLOADED_MODEL_PATH"])
-        self.model = SlidingWindowTransformerModel(self.config["DOWNLOADED_MODEL_PATH"], rnn="GRU").to(self.config["device"])
+        self.model = SlidingWindowTransformerModel(self.config["DOWNLOADED_MODEL_PATH"], rnn="GRU").to(
+            self.config["device"])
 
     def process(self, essay: str):
         """_summary_
@@ -34,10 +35,11 @@ class DiscourseRecognizer:
         """
         test_texts = [essay]
         test_df = get_test_dataframe(test_texts)
+        # print("TEST DF: ", test_df)
         test_dataset = infer_dataset(test_df, self.tokenizer, max_len=self.config["max_length"])
         test_dataloader = DataLoader(
             test_dataset,
-            batch_size=self.config["batch_size"],
+            batch_size=self.config["valid_batch_size"],
             shuffle=False,
             num_workers=2,
             pin_memory=True,
@@ -51,7 +53,8 @@ class DiscourseRecognizer:
                 predict_strings(
                     disc_type,
                     thresholds[disc_type],
-                    groups, test_texts,
+                    groups,
+                    test_df,
                     test_words_preds,
                     self.xgb_models,
                     self.lgb_models
@@ -62,14 +65,32 @@ class DiscourseRecognizer:
         output_list = []
         for i in range(len(output_df)):
             discourse_dict = {
-                "start": output_df[i]["predictionstring"][0],
-                "end": output_df[i]["predictionstring"][1],
-                "type": output_df[i]["class"]
+                "start": str(output_df.iloc[i]["predictionstring"]).split()[0],
+                "end": str(output_df.iloc[i]["predictionstring"]).split()[-1],
+                "type": str(output_df.iloc[i]["class"])
             }
             output_list.append(discourse_dict)
 
         return output_list
 
+
+if __name__ == "__main__":
+    import time
+
+    disc_re = DiscourseRecognizer(config=cfg)
+
+    while (1):
+        essay = str(input("Essay:"))
+        start = time.time()
+        output_list = disc_re.process(essay)
+        for item in output_list:
+            print(item)
+        end = time.time()
+        print("Process run time: {} s".format(start - end))
+
+        stop = str(input("End? (Y,N): "))
+        if stop.lower() == "y":
+            break
 
 
 

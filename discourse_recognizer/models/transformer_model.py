@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from transformers import AutoConfig, AutoModel
-from residual_lstm import ResidualLSTM
+from .residual_lstm import ResidualLSTM
 
 rearrange_indices = [14, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 
@@ -30,7 +30,7 @@ class SlidingWindowTransformerModel(nn.Module):
     def __init__(self, DOWNLOADED_MODEL_PATH, rnn, window_size=512, edge_len=64):
         super(SlidingWindowTransformerModel, self).__init__()
         config_model = AutoConfig.from_pretrained(DOWNLOADED_MODEL_PATH + '/config.json')
-
+        print(DOWNLOADED_MODEL_PATH)
         self.backbone = AutoModel.from_pretrained(
             DOWNLOADED_MODEL_PATH + '/pytorch_model.bin', config=config_model)
 

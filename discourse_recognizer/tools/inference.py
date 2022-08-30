@@ -1,6 +1,6 @@
 import gc
 import numpy as np
-from config import cfg, labels_to_ids
+from discourse_recognizer.config import cfg, labels_to_ids
 from tqdm import tqdm
 import torch
 
