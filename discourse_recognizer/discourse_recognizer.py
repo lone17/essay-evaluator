@@ -65,8 +65,8 @@ class DiscourseRecognizer:
         output_list = []
         for i in range(len(output_df)):
             discourse_dict = {
-                "start": str(output_df.iloc[i]["predictionstring"]).split()[0],
-                "end": str(output_df.iloc[i]["predictionstring"]).split()[-1],
+                "start": int(str(output_df.iloc[i]["predictionstring"]).split()[0]),
+                "end": int(str(output_df.iloc[i]["predictionstring"]).split()[-1]),
                 "type": str(output_df.iloc[i]["class"])
             }
             output_list.append(discourse_dict)
