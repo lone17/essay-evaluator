@@ -1,3 +1,5 @@
+import gradio as gr
+
 from essay_evaluator import EssayEvaluator
 import gradio as gr
 """TODO
