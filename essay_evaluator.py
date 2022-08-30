@@ -1,15 +1,19 @@
 from typing import List
+from discourse_evaluator import DiscourseEvaluator
 
 from discourse_recognizer import DiscourseRecognizer
-from discourse_classifier import DiscourseClassifier
-
 
 class EssayEvaluator:
-    def __init__(self, discourse_recognizer,  discourse_classifer, discourse_evaluator, 
-                 *args, **kwargs) -> None:
-        pass
+    def __init__(
+        self, 
+        discourse_recognizer: DiscourseRecognizer,
+        discourse_evaluator: DiscourseEvaluator, 
+        *args, **kwargs) -> None:
+
+        self.recognizer = discourse_recognizer
+        self.evaluator = discourse_evaluator
     
-    def process(essay: str, *args, **kwargs) -> List[dict]:
+    def process(self, essay: str, *args, **kwargs) -> List[dict]:
         """_summary_
 
         Args:
@@ -31,5 +35,15 @@ class EssayEvaluator:
             ...
         ]
         """
-        pass
-        
+        discourses = self.recognizer.process(essay, args, kwargs)
+        for i in range(len(discourses)):
+            st = discourses[i]["start"]
+            ed = discourses[i]["end"]
+
+            dc_txt = essay[st:ed + 1]
+            dc_type = discourses[i]["type"]
+
+            eval = self.evaluator.process(dc_txt, dc_type, essay, args, kwargs)
+            discourses[i].update(eval)
+
+        return discourses
