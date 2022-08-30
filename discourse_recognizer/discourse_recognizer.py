@@ -4,6 +4,7 @@ from transformers import AutoTokenizer
 from .models.transformer_model import TransformerModel, SlidingWindowTransformerModel
 from .dataload.infer_dataset import infer_dataset, CustomCollate
 from .tools.predict import get_test_dataframe, get_tree_models, predict_strings, sub_df
+from .tools.post_process import remove_overlap
 from .tools.inference import inference
 from .config import thresholds, disc_type_to_ids, cfg
 
@@ -70,6 +71,7 @@ class DiscourseRecognizer:
                 "type": str(output_df.iloc[i]["class"])
             }
             output_list.append(discourse_dict)
+        output_list = remove_overlap(output_list, test_words_preds)
 
         return output_list
 
