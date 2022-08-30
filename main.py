@@ -26,14 +26,22 @@ def splitter(start, end, str):
 def greet(essay):
     essay_list = EssayEvaluator.process(essay)
     #essay = demoText
-    #essay_list = [{"start" : 1, "end": 100, "type": "Lead", "effectiveness": "Useless", "score": 80},
-    #              {"start": 101, "end": 200, "type": "Position", "effectiveness": "Useful", "score":60}]
+    #essay_list = [{"start" : 1, "end": 50, "type": "Lead", "effectiveness": "Useless", "score": 80},
+    #           {"start": 106, "end": 200, "type": "Position", "effectiveness": "Useful", "score":60},
+    #            {"start": 52, "end": 58, "type": "Position", "effectiveness": "Useful", "score":60},
+    #            {"start": 58, "end": 70, "type": "Position", "effectiveness": "Useful", "score":60},
+    #             ]
+    essay_list.append({"start" : 0, "end": 0, "type": None, "effectiveness": None, "score": None})
+    sorted_essay = sorted(essay_list, key=lambda d: d['start'])
     outputText = []
-    for essaySegment in essay_list:
-        segmentText = f"[TYPE: {essaySegment['type']}, COMMENT: {essaySegment['effectiveness']}, SCORE: {essaySegment['score']}]\n"
+    for i in range(1, len(sorted_essay)):
+        if (sorted_essay[i]['start'] > sorted_essay[i - 1]['end'] + 1):
+            segmentText = splitter(sorted_essay[i - 1]['end'] + 1, sorted_essay[i]['start'] - 1, essay) + '\n'
+            outputText.append((segmentText, None))
+        segmentText = f"[TYPE: {sorted_essay[i]['type']}, COMMENT: {sorted_essay[i]['effectiveness']}, SCORE: {sorted_essay[i]['score']}]\n"
         outputText.append((segmentText, "Evaluate"))
-        segmentText = splitter(essaySegment['start'], essaySegment['end'], essay) + '\n'
-        outputText.append((segmentText, essaySegment['type']))
+        segmentText = splitter(sorted_essay[i]['start'], sorted_essay[i]['end'], essay) + '\n'
+        outputText.append((segmentText, sorted_essay[i]['type']))
         outputText.append(('\n', None))
     return outputText
 
@@ -45,6 +53,7 @@ demo = gr.Interface(
     outputs= gr.Highlightedtext(
       label = "Segmentation",
       combine_adjacent = True,
-    ),
+    )
+    # .style(color_map={"Evaluate": "green"}),
 )
 demo.launch()
