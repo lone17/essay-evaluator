@@ -1,17 +1,17 @@
 from typing import List
-from discourse_evaluator import DiscourseEvaluator
 
 from discourse_recognizer import DiscourseRecognizer
+from discourse_evaluator import DiscourseEvaluator
 
 class EssayEvaluator:
     def __init__(
         self, 
-        discourse_recognizer: DiscourseRecognizer,
-        discourse_evaluator: DiscourseEvaluator, 
+        discourse_recognizer_params,
+        discourse_evaluator_params, 
         *args, **kwargs) -> None:
 
-        self.recognizer = discourse_recognizer
-        self.evaluator = discourse_evaluator
+        self.recognizer = DiscourseRecognizer(**discourse_recognizer_params)
+        self.evaluator = DiscourseEvaluator(**discourse_evaluator_params)
     
     def process(self, essay: str, *args, **kwargs) -> List[dict]:
         """_summary_
@@ -35,12 +35,13 @@ class EssayEvaluator:
             ...
         ]
         """
-        discourses = self.recognizer.process(essay, args, kwargs)
+        discourses = self.recognizer.process(essay)
+        essay_split = essay.split()
         for i in range(len(discourses)):
             st = discourses[i]["start"]
             ed = discourses[i]["end"]
 
-            dc_txt = essay[st:ed + 1]
+            dc_txt = " ".join(essay_split[st:ed + 1])
             dc_type = discourses[i]["type"]
 
             eval = self.evaluator.process(dc_txt, dc_type, essay, args, kwargs)

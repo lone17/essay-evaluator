@@ -28,7 +28,6 @@ class infer_dataset(Dataset):
     def __getitem__(self, item):
         # Get text
         text = self.data.text[item]
-        print("TEXT:", text) # DUCANH TEST
         # Encode the text
         encoding = self.tokenizer(
             text,

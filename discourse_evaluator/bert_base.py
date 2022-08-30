@@ -58,7 +58,6 @@ class BertBaseModel(DiscourseEvalBaseModel):
         output = output.detach().cpu().numpy()
 
         output = self.softmax(output)
-        print(output)
 
         id = np.argmax(output)
 

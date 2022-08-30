@@ -1,18 +1,9 @@
-from essay_evaluator import EssayEvaluator
 import gradio as gr
+
+from essay_evaluator import EssayEvaluator
+
 """TODO
 1. Load the model
-Returns a list of dict, each dict represents a discourse text
-        [
-            {
-                "start": int, -> the start position (character index)
-                "end": int, -> the end position (character index)
-                "type": str, -> discourse type
-                "effectiveness": str, -> discourse effectiveness
-                "score": float -> effectiveness score
-            },
-            ...
-        ]
 2. Create the UI
 3. Serve
 """ 
@@ -23,8 +14,13 @@ def splitter(start, end, str):
     pieces = str.split()
     return " ".join(pieces[start : end + 1])
 
+evaluator = EssayEvaluator(
+    discourse_recognizer_params={},
+    discourse_evaluator_params={"weights": "./discourse_evaluator/pretrained/bert-base.pth"}
+)
+
 def greet(essay):
-    essay_list = EssayEvaluator.process(essay)
+    essay_list = evaluator.process(essay)
     #essay = demoText
     #essay_list = [{"start" : 1, "end": 100, "type": "Lead", "effectiveness": "Useless", "score": 80},
     #              {"start": 101, "end": 200, "type": "Position", "effectiveness": "Useful", "score":60}]
@@ -47,4 +43,4 @@ demo = gr.Interface(
       combine_adjacent = True,
     ),
 )
-demo.launch()
+demo.launch(share=True)
