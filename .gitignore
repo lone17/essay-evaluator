@@ -131,3 +131,5 @@ dmypy.json
 # Model weights
 *.pth
 **/pretrained
+
+*input/
